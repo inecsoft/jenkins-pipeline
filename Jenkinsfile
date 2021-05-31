@@ -5,11 +5,10 @@ pipeline{
         // SERVER_CREDENTAILS = credentials('server_credential')
     }
     
-    tools {
-        // Install the golang version configured as "go" and add it to the path.
-        // Ensure the desired Go version is installed
-        def root = tool type: 'go', name: 'Go 1.15'
-    }
+    // Install the golang version configured as "go" and add it to the path.
+    // Ensure the desired Go version is installed
+    def root = tool type: 'go', name: 'Go 1.15'
+  
 
     stages{
         stage("CHECKOUT"){
