@@ -4,10 +4,18 @@ pipeline{
         NEW_VERSION = "${TAG_NAME}"
         // SERVER_CREDENTAILS = credentials('server_credential')
     }
+        tools {
+        // Install the golang version configured as "go" and add it to the path.
+        // Ensure the desired Go version is installed
+        def root = tool type: 'go', name: 'Go 1.15'
+    }
+
     stages{
         stage("CHECKOUT"){
             steps{
                 echo "========Executing Checkout stage========"
+                // Get some code from a GitHub repository
+                git 'https://github.com/jglick/simple-maven-project-with-tests.git'
             }
 
         }
