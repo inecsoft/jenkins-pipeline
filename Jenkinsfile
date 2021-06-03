@@ -3,7 +3,7 @@
 pipeline{
     agent any 
     environment{
-        NEW_VERSION = "${TAG_NAME}"
+        NEW_VERSION = TAG_NAME
         // SERVER_CREDENTAILS = credentials('server_credential')
     }
     
@@ -24,32 +24,39 @@ pipeline{
         stage("BUILD"){
             steps{
                 echo "========Executing Build stage========"
-                try {
-                    timeout(time: 3, unit: 'MINUTES') {
-                        sh 'echo "Hello World"'
-                        sh '''
-                            echo "Multiline shell steps works too"
-                            ls -lah
-                            which groovy
-                            groovy -version
-                            java -version
-                        '''
+                script {
+                    try {
+                        timeout(time: 3, unit: 'MINUTES') {
+                            sh 'echo "Hello World"'
+                            sh '''
+                                echo "Multiline shell steps works too"
+                                ls -lah
+                                which groovy
+                                groovy -version
+                                java -version
+                            '''
+                        }
+                    }
+                    catch (ex) {
+                        println (ex)
                     }
                 }
-                catch (ex) {
-                    println (ex)
-                }
             }
-
         }
 
         stage("TEST"){
-            when{
-                expression {
-                    GIT_BRANCH == "staging" || GIT_BRANCH == "dev"
-                }
+            options {
+                timeout(time: 1, unit: 'MINUTES') 
             }
-            steps{
+           //Execute the stage when the build is building a tag when the TAG_NAME variable exists
+           when {
+                buildingTag()
+            }
+            // when {
+            //     tag comparator: 'REGEXP', pattern: 'v*'
+            // }
+
+            steps {
                 echo "========Executing Test stage========"
                 echo "testing new version ${NEW_VARSION}"
             }
