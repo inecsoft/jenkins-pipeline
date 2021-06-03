@@ -1,4 +1,4 @@
-#!/usr/bin/env groovy
+#!/usr/local/groovy-3.0.8/bin/groovy
 
 pipeline{
     agent any 
@@ -9,7 +9,7 @@ pipeline{
     
     // Install the golang version configured as "go" and add it to the path.
     // Ensure the desired Go version is installed
-    def root = tool type: 'go', name: 'Go 1.15'
+    // def root = tool type: 'go', name: 'Go 1.15'
   
 
     stages{
