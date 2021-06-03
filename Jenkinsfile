@@ -24,16 +24,20 @@ pipeline{
         stage("BUILD"){
             steps{
                 echo "========Executing Build stage========"
-                echo $NEW_VERSION
-                timeout(time: 3, unit: 'MINUTES') {
-                    sh 'echo "Hello World"'
-                    sh '''
-                        echo "Multiline shell steps works too"
-                        ls -lah
-                        which groovy
-                        groovy -version
-                        java -version
-                    '''
+                try {
+                    timeout(time: 3, unit: 'MINUTES') {
+                        sh 'echo "Hello World"'
+                        sh '''
+                            echo "Multiline shell steps works too"
+                            ls -lah
+                            which groovy
+                            groovy -version
+                            java -version
+                        '''
+                    }
+                }
+                catch (ex) {
+                    println (ex)
                 }
             }
 
