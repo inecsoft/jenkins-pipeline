@@ -3,7 +3,7 @@
 pipeline{
     agent any 
     environment{
-        NEW_VERSION = TAG_NAME
+        NEW_VERSION = "${TAG_NAME}"
         // SERVER_CREDENTAILS = credentials('server_credential')
     }
     
