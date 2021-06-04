@@ -130,3 +130,39 @@ pipeline{
 //         }
 //     }
 // }
+// Using git within checkout 
+pipeline {
+    agent any
+    parameters {
+        gitParameter name: 'TAG', 
+                     type: 'PT_TAG',
+                     defaultValue: 'master'
+    }
+    stages {
+        stage('Checkout') {
+            options {
+                timeout(time: 5, unit: 'MINUTES') 
+            }
+            steps{
+                echo "========Executing Checkout stage========"
+                script {
+                    try {
+                        sh 'echo "Building packages for the infrastructure"'
+                        checkout([$class: 'GitSCM', 
+                            branches: [[name: "${params.TAG}"]], 
+                            doGenerateSubmoduleConfigurations: false, 
+                            extensions: [], 
+                            gitTool: 'Default', 
+                            submoduleCfg: [], 
+                            userRemoteConfigs: [[url: 'https://github.com/inecsoft/jenkins-pipeline.git']]
+                        ])
+                    }
+                    catch (ex) {
+                        println (ex)
+                    }
+                }
+                
+            }
+        }
+    }
+}
