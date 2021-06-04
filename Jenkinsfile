@@ -11,31 +11,57 @@ pipeline{
     // Ensure the desired Go version is installed
     // def root = tool type: 'go', name: 'Go 1.15'
   
-
+   // parameters {
+    //   string defaultValue: '${TAG}', description: '', name: 'BRANCH_TAG', trim: true
+    // }
+    
     stages{
         stage("CHECKOUT"){
+            options {
+                timeout(time: 5, unit: 'MINUTES') 
+            }
             steps{
                 echo "========Executing Checkout stage========"
                 // Get some code from a GitHub repository
-                git 'https://github.com/jglick/simple-maven-project-with-tests.git'
+                // git 'https://github.com/jglick/simple-maven-project-with-tests.git'
+                // Refspec: '+refs/tags/*':'refs/remotes/origin/tags/*'
+                // Branch Specifier: **/tags/**
+                // git ([url: 'https://github.com/inecsoft/jenkins-pipeline.git'])
+                checkout([$class: 'GitSCM', 
+                        //   branches: [[name: "${params.BRANCH_TAG}"]], 
+                          branches: [[name: 'refs/tags/*'.trim()]],
+                          doGenerateSubmoduleConfigurations: false, 
+                          extensions: [], 
+                          gitTool: 'Default', 
+                          submoduleCfg: [], 
+                          userRemoteConfigs: [[url: 'https://github.com/inecsoft/jenkins-pipeline.git']]
+                ])
+                echo "value of ${params.TAG_NAME}";
+                echo "value of TAG_NAME VAR: ${env.TAG_NAME}"
             }
 
         }
+        
         stage("BUILD"){
+            options {
+                timeout(time: 5, unit: 'MINUTES') 
+            }
             steps{
                 echo "========Executing Build stage========"
                 script {
                     try {
-                        timeout(time: 3, unit: 'MINUTES') {
-                            sh 'echo "Hello World"'
-                            sh '''
-                                echo "Multiline shell steps works too"
-                                ls -lah
-                                which groovy
-                                groovy -version
-                                java -version
-                            '''
-                        }
+                        sh 'echo "Building packages for the infrastructure"'
+                        sh '''
+                            echo "Multiline shell steps Building packages for the infrastructure"
+                            ls -lah
+                            which groovy
+                            groovy -version
+                            java -version
+                            #rm -rf ./builds
+                            #mkdir -p .builds
+                            #go build -o ./builds/"${repo-name}
+                            #aws s3api put-object --bucket "${bucket-name}" --key "${}" 
+                        '''
                     }
                     catch (ex) {
                         println (ex)
@@ -46,10 +72,10 @@ pipeline{
 
         stage("TEST"){
             options {
-                timeout(time: 1, unit: 'MINUTES') 
+                timeout(time: 5, unit: 'MINUTES') 
             }
-           //Execute the stage when the build is building a tag when the TAG_NAME variable exists
-           when {
+            //Execute the stage when the build is building a tag when the TAG_NAME variable exists
+            when {
                 buildingTag()
             }
             // when {
@@ -58,14 +84,35 @@ pipeline{
 
             steps {
                 echo "========Executing Test stage========"
-                echo "testing new version ${NEW_VARSION}"
+                echo "testing new version ${NEW_VERSION}"
             }
 
         }
 
         stage("DEPLOY"){
+            options {
+                timeout(time: 5, unit: 'MINUTES') 
+            }
+
             steps{
                 echo "========Executing Deploy stage========"
+                script {
+                    try {
+                        sh 'echo "Deploying packages to the infrastructure"'
+                        sh '''
+                            echo "Multiline shell steps in Deployment stage"
+                            ls -lah
+                            which groovy
+                            groovy -version
+                            java -version
+                            // sleep 300
+                        '''
+                        
+                    }
+                    catch (ex) {
+                        println (ex)
+                    }
+                }
             }
 
         }
