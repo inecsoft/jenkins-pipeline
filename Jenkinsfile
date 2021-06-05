@@ -29,10 +29,7 @@ pipeline{
             options {
                 timeout(time: 5, unit: 'MINUTES') 
             }
-            when {
-                tag "v*"
-            }
-            echo 'Deploying only because this commit is tagged...'
+
             steps{
                 echo "========Executing Checkout stage========"
                 // Get some code from a GitHub repository
@@ -40,7 +37,7 @@ pipeline{
                 // Refspec: '+refs/tags/*':'refs/remotes/origin/tags/*'
                 // Branch Specifier: **/tags/**
                 // git ([url: 'https://github.com/inecsoft/jenkins-pipeline.git'])
-                // git show-ref --tags | tail -n1 |  awk -F "refs/tags/" '{print $2}'
+                //q | tail -n1 |  awk -F "refs/tags/" '{print $2}'
                 checkout([$class: 'GitSCM', 
                     // branches: [[name: "${params.BRANCH_TAG}"]], 
                     branches: [[name: 'refs/tags/*'.trim()]],
@@ -51,12 +48,16 @@ pipeline{
                     userRemoteConfigs: [[url: 'https://github.com/inecsoft/jenkins-pipeline.git']]
                 ])
                 echo "value of ${params.TAG_NAME}";
-                echo "value of TAG_NAME VAR: ${env.TAG_NAME}";
+                echo "value of NEW_VERSION VAR: ${env.NEW_VERSION}";
                 sh 'printenv';
                 sh 'pwd'
+                echo "Finished if not new tag pushed encountered"
+                when {
+                   tag "v*"
+                }
+                echo 'Deploying only because this commit is tagged...
             }
-
-        }
+        }   
         
         stage("BUILD"){
             options {
