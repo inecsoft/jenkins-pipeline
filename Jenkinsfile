@@ -1,17 +1,26 @@
 #!/usr/local/groovy-3.0.8/bin/groovy
 
 pipeline{
-    agent any 
-    environment{
+    agent any
+    options {
+        timestamps()
+        ansiColor('xterm')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        disableConcurrentBuilds()
+    }
+    environment {
         NEW_VERSION = "${TAG_NAME}"
         // SERVER_CREDENTAILS = credentials('server_credential')
     }
-    
+    triggers {
+        pollSCM('H/4 * * * 1-5');
+        cron('H * * * 1-5')
+    }
     // Install the golang version configured as "go" and add it to the path.
     // Ensure the desired Go version is installed
     // def root = tool type: 'go', name: 'Go 1.15'
   
-   // parameters {
+    // parameters {
     //   string defaultValue: '${TAG}', description: '', name: 'BRANCH_TAG', trim: true
     // }
     
@@ -20,6 +29,10 @@ pipeline{
             options {
                 timeout(time: 5, unit: 'MINUTES') 
             }
+            when {
+                tag "v*"
+            }
+            echo 'Deploying only because this commit is tagged...'
             steps{
                 echo "========Executing Checkout stage========"
                 // Get some code from a GitHub repository
@@ -27,17 +40,20 @@ pipeline{
                 // Refspec: '+refs/tags/*':'refs/remotes/origin/tags/*'
                 // Branch Specifier: **/tags/**
                 // git ([url: 'https://github.com/inecsoft/jenkins-pipeline.git'])
+                // git show-ref --tags | tail -n1 |  awk -F "refs/tags/" '{print $2}'
                 checkout([$class: 'GitSCM', 
-                        //   branches: [[name: "${params.BRANCH_TAG}"]], 
-                          branches: [[name: 'refs/tags/*'.trim()]],
-                          doGenerateSubmoduleConfigurations: false, 
-                          extensions: [], 
-                          gitTool: 'Default', 
-                          submoduleCfg: [], 
-                          userRemoteConfigs: [[url: 'https://github.com/inecsoft/jenkins-pipeline.git']]
+                    // branches: [[name: "${params.BRANCH_TAG}"]], 
+                    branches: [[name: 'refs/tags/*'.trim()]],
+                    doGenerateSubmoduleConfigurations: false, 
+                    extensions: [], 
+                    gitTool: 'Default', 
+                    submoduleCfg: [], 
+                    userRemoteConfigs: [[url: 'https://github.com/inecsoft/jenkins-pipeline.git']]
                 ])
                 echo "value of ${params.TAG_NAME}";
-                echo "value of TAG_NAME VAR: ${env.TAG_NAME}"
+                echo "value of TAG_NAME VAR: ${env.TAG_NAME}";
+                sh 'printenv';
+                sh 'pwd'
             }
 
         }
@@ -93,7 +109,11 @@ pipeline{
             options {
                 timeout(time: 5, unit: 'MINUTES') 
             }
-
+            input {
+                message '"Are you sure you want to " + environments[i] + "?"'
+                id '"Approve " + environments[i] + " Deployment (Y/N)"'
+                ok 'Deploy'
+            }
             steps{
                 echo "========Executing Deploy stage========"
                 script {
@@ -105,9 +125,8 @@ pipeline{
                             which groovy
                             groovy -version
                             java -version
-                            // sleep 300
+                            #sleep 300
                         '''
-                        
                     }
                     catch (ex) {
                         println (ex)
