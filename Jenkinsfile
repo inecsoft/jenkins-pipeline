@@ -29,6 +29,17 @@ pipeline{
             options {
                 timeout(time: 5, unit: 'MINUTES') 
             }
+            //echo "Execute the stage when the build is building a tag when the TAG_NAME variable exists"
+            // when {
+            //     buildingTag()
+            // }
+            when {
+                tag comparator: 'REGEXP', pattern: 'v*'
+            }
+            // when {
+            //     tag "v*"
+            // }
+            //echo 'Deploying only because this commit is tagged...
 
             steps{
                 echo "========Executing Checkout stage========"
@@ -37,7 +48,7 @@ pipeline{
                 // Refspec: '+refs/tags/*':'refs/remotes/origin/tags/*'
                 // Branch Specifier: **/tags/**
                 // git ([url: 'https://github.com/inecsoft/jenkins-pipeline.git'])
-                //q | tail -n1 |  awk -F "refs/tags/" '{print $2}'
+                // git show-ref --tags | tail -n1 |  awk -F "refs/tags/" '{print $2}'
                 checkout([$class: 'GitSCM', 
                     // branches: [[name: "${params.BRANCH_TAG}"]], 
                     branches: [[name: 'refs/tags/*'.trim()]],
@@ -47,15 +58,10 @@ pipeline{
                     submoduleCfg: [], 
                     userRemoteConfigs: [[url: 'https://github.com/inecsoft/jenkins-pipeline.git']]
                 ])
-                echo "value of ${params.TAG_NAME}";
-                echo "value of NEW_VERSION VAR: ${env.NEW_VERSION}";
-                sh 'printenv';
+                echo "value of ${params.TAG_NAME}"
+                echo "value of NEW_VERSION VAR: ${env.NEW_VERSION}"
+                sh 'printenv'
                 sh 'pwd'
-                echo "Finished if not new tag pushed encountered"
-                when {
-                   tag "v*"
-                }
-                echo 'Deploying only because this commit is tagged...
             }
         }   
         
