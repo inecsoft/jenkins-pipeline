@@ -5,16 +5,16 @@ pipeline{
     options {
         timestamps()
         ansiColor('xterm')
-        buildDiscarder(logRotator(numToKeepStr: '10'))
+        buildDiscarder(logRotator(numToKeepStr: '15'))
         disableConcurrentBuilds()
-    }
-    environment {
-        NEW_VERSION = "${TAG_NAME}"
-        // SERVER_CREDENTAILS = credentials('server_credential')
     }
     triggers {
         pollSCM('H/4 * * * 1-5');
         cron('H * * * 1-5')
+    }
+    environment {
+        env = "[ 'dev', 'stage', 'prod']"
+        // SERVER_CREDENTAILS = credentials('server_credential')
     }
     // Install the golang version configured as "go" and add it to the path.
     // Ensure the desired Go version is installed
@@ -33,9 +33,9 @@ pipeline{
             // when {
             //     buildingTag()
             // }
-            when {
-                tag comparator: 'REGEXP', pattern: 'v*'
-            }
+            // when {
+            //     tag comparator: 'REGEXP', pattern: 'v*'
+            // }
             // when {
             //     tag "v*"
             // }
@@ -59,9 +59,12 @@ pipeline{
                     userRemoteConfigs: [[url: 'https://github.com/inecsoft/jenkins-pipeline.git']]
                 ])
                 echo "value of ${params.TAG_NAME}"
-                echo "value of NEW_VERSION VAR: ${env.NEW_VERSION}"
+                echo "value of env VAR: ${env.env}"
                 sh 'printenv'
                 sh 'pwd'
+                sh '''
+                  go version
+                '''
             }
         }   
         
