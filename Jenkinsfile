@@ -13,7 +13,7 @@ pipeline{
         cron('H * * * 1-5')
     }
     environment {
-        env = "[ 'dev', 'stage', 'prod']"
+        environments = "['dev', 'stage', 'prod']"
         // SERVER_CREDENTAILS = credentials('server_credential')
     }
     // Install the golang version configured as "go" and add it to the path.
@@ -68,6 +68,42 @@ pipeline{
             }
         }   
         
+        stage("TEST"){
+            options {
+                timeout(time: 5, unit: 'MINUTES') 
+            }
+            //Execute the stage when the build is building a tag when the TAG_NAME variable exists
+            // when {
+            //     buildingTag()
+            // }
+            // when {
+            //     tag comparator: 'REGEXP', pattern: 'v*'
+            // }
+
+            steps {
+                echo "========Executing Test stage========"
+                script {
+                    try {
+                        sh 'echo "TESTING code for the Project"'
+                        sh '''
+                            echo "Multiline shell steps TESTING code for the Project"
+                            pwd
+                            ls -lah
+                            go get -u github.com/golang/lint/golint
+                            echo "# Ensure code passes all lint tests"
+                            golint -set_exit_status
+                            echo "# Run all tests included with our application"
+                            go test
+                        '''
+                    }
+                    catch (ex) {
+                        println (ex)
+                    }
+                }
+            }
+
+        }
+
         stage("BUILD"){
             options {
                 timeout(time: 5, unit: 'MINUTES') 
@@ -80,13 +116,9 @@ pipeline{
                         sh '''
                             echo "Multiline shell steps Building packages for the infrastructure"
                             ls -lah
-                            which groovy
-                            groovy -version
-                            java -version
-                            #rm -rf ./builds
-                            #mkdir -p .builds
-                            #go build -o ./builds/"${repo-name}
-                            #aws s3api put-object --bucket "${bucket-name}" --key "${}" 
+                            echo "# Build our application"
+                            go build -o app
+
                         '''
                     }
                     catch (ex) {
@@ -96,31 +128,12 @@ pipeline{
             }
         }
 
-        stage("TEST"){
-            options {
-                timeout(time: 5, unit: 'MINUTES') 
-            }
-            //Execute the stage when the build is building a tag when the TAG_NAME variable exists
-            when {
-                buildingTag()
-            }
-            // when {
-            //     tag comparator: 'REGEXP', pattern: 'v*'
-            // }
-
-            steps {
-                echo "========Executing Test stage========"
-                echo "testing new version ${NEW_VERSION}"
-            }
-
-        }
-
         stage("DEPLOY"){
             options {
                 timeout(time: 5, unit: 'MINUTES') 
             }
             input {
-                message '"Are you sure you want to " + environments[i] + "?"'
+                message '"Are you sure you want to " + environments.each { x -> println(x) } + "?"'
                 id '"Approve " + environments[i] + " Deployment (Y/N)"'
                 ok 'Deploy'
             }
@@ -132,9 +145,9 @@ pipeline{
                         sh '''
                             echo "Multiline shell steps in Deployment stage"
                             ls -lah
-                            which groovy
-                            groovy -version
-                            java -version
+                            aws --version
+                            #app
+
                             #sleep 300
                         '''
                     }
