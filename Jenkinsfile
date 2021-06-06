@@ -8,6 +8,17 @@ pipeline {
         maven "M3"
     }
 
+    environment {
+        AWS_ACCESS_KEY_ID         = credentials('jenkins-aws-secret-key-id')
+        AWS_SECRET_ACCESS_KEY     = credentials('jenkins-aws-secret-access-key')
+        AWS_REGION                = 'eu-west-1'
+        ARTIFACT_NAME             = 'calculator.jar'
+        AWS_S3_BUCKET             = 'artifact-backet'
+        AWS_LAMBDA_APP_NAME       = 'calculator'
+        AWS_LAMBDA_ENVIRONMENT    = 'prod'
+        AWS_LAMBDA_APP_VERSION    = "${BUILD_ID}"
+    } 
+
     stages {
         stage('Checkout') {
             steps {
@@ -39,8 +50,9 @@ pipeline {
                 // If Maven was able to run the tests, even if some of the test
                 // failed, record the test results and archive the jar file.
                 success {
-                    junit '**/target/surefire-reports/TEST-*.xml'
                     archiveArtifacts 'target/*.jar'
+                    sh 'aws configure set region eu-west-1'
+                    sh 'aws s3 cp ./target/calculator-0.0.1-SNAPSHOT.jar s3://$AWS_S3_BUCKET/$ARTIFACT_NAME'
                 }
             }
         }
