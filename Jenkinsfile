@@ -14,7 +14,11 @@ pipeline{
     }
     environment {
         environments = "['dev', 'stage', 'prod']"
-        // SERVER_CREDENTAILS = credentials('server_credential')
+        // AWS_ACCESS_KEY_ID         = credentials('jenkins-aws-secret-key-id')
+        // AWS_SECRET_ACCESS_KEY     = credentials('jenkins-aws-secret-access-key')
+        AWS_REGION                = 'eu-west-1'
+        ARTIFACT_NAME             = 'app.zip'
+        AWS_S3_BUCKET             = 'artifact-backet'
     }
     // Install the golang version configured as "go" and add it to the path.
     // Ensure the desired Go version is installed
@@ -116,6 +120,8 @@ pipeline{
                         sh '''
                             echo "Multiline shell steps Building packages for the infrastructure"
                             ls -lah
+                            pwd
+                            zip --version
                             echo "# Build our application"
                             go build -o app
 
@@ -125,6 +131,16 @@ pipeline{
                         println (ex)
                     }
                 }
+                post {
+                // If go was able to run the tests, even if some of the test
+                // failed, record the test results and archive the zip file.
+                success {
+                    archiveArtifacts 'target/app'
+                    sh 'aws configure set region eu-west-1'
+                    sh 'zip app.zip ./target/app'
+                    sh 'aws s3 cp ./target/app.zip s3://$AWS_S3_BUCKET/$ARTIFACT_NAME'
+                }
+            }
             }
         }
 
